@@ -1,4 +1,4 @@
-const CUSTODY_URL = "http://127.0.0.1:5000/jsonrpc/"
+const CUSTODY_URL = process.env.NEXT_PUBLIC_CUSTODY_SERVICE_RPC!
 
 const callRpcMethod = async (method: string, params: any) => {
     const response = await fetch(CUSTODY_URL, {
