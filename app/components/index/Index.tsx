@@ -186,7 +186,7 @@ export default function Index() {
                 </tr>
             </thead>
             <tbody>
-                {pendingWithdraws.map((pw, index) => {
+                {pendingWithdraws.filter(w => !w.submitted).map((pw, index) => {
                     const numSigned = Object.keys(pw.signatures || {}).length;
                     const threshold = pw.agent.threshold;
                     const canSubmit = numSigned >= threshold;
