@@ -20,13 +20,15 @@ export const handler = async (params: any) => {
     const recoveredAddress = ethers.verifyMessage(withdraw.approvalMessage, signature).toLowerCase();
     console.log({withdraw, recoveredAddress})
 
-    if (withdraw.agent.signers.findIndex(s => s.toLowerCase() == recoveredAddress) < 0)
+    if (withdraw.agent.signers.findIndex((s: string) => s.toLowerCase() == recoveredAddress) < 0)
       throw 'Signature verification failed'
 
-    withdraw["signatures"] = {
-        ...withdraw["signatures"],
-        [recoveredAddress]: signature
+    if(!withdraw.signatures){
+        withdraw.signatures = {[recoveredAddress]:signature}
+    }else{
+        withdraw.signatures.set(recoveredAddress, signature)
     }
+
 
     await withdraw.save()
 

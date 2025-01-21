@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 				}
 			);
 		}
-	} catch (err) {
+	} catch (err: any) {
 		return NextResponse.json(
 			{
 				jsonrpc: "2.0",
