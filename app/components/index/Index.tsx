@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
     setUser,
     setAgents,
@@ -25,47 +25,27 @@ import styles from '@/app/styles/layout.module.css'
 import { cloneObject, formatAddress } from "@/lib/utils";
 import CustomInput from "../input";
 import { WithdrawAddBox } from "./withdraw-add-box";
-import { AddAgent } from "./add-agent";
+import AddAgent , {AddAgentRef} from "./add-agent";
 import * as backend from "@/lib/backend"
 import Link from "next/link";
+import { Tabs } from "../tabs";
+import { AgentChainPan } from "../agent-chain-pan";
+import { PendingWithdrawDoc } from "@/models/pending-withdraw";
 
 export default function Index() {
+    const addAgentRef = useRef<AddAgentRef>(null);
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectUser);
     const agents = useAppSelector(selectAgents);
-    const [selectedToken, setSelectedToken] = useState(null);
-    const depositAddresses = useAppSelector(selectDepositAddresses);
-    const deposits = useAppSelector(selectDeposits);
+
     const pendingWithdraws = useAppSelector(selectPendingWithdraws);
-    const withdraws = useAppSelector(selectWithdraws);
     const { sdk, account, provider } = useSDK();
-    const [signature, setSignature] = useState<string | null>(null);
+    const [selectedChain, setSelectedChain] = useState("SOL")
 
     const [error, setError] = useState(null);
     const [selectedAgent, setSelectedAgent] = useState(null);
 
-    const [rangeFrom, setRangeFrom] = useState(0);
-    const [rangeTo, setRangeTo] = useState(5);
-
-    const handleCreateAddress = async (e: any) => {
-        e.preventDefault();
-        try {
-            if (selectedAgent == null)
-                return;
-
-            const result = await CustodyServiceApi.createDepositAddressRange(
-                selectedAgent.id!,
-                "SOL",
-                [parseInt(rangeFrom), parseInt(rangeTo)]
-            );
-            alert("Addresses created, TX: " + result)
-            dispatch(fetchDepositAddresses({ agent: selectedAgent.id, chain: "SOL" }))
-        } catch (err) {
-            setError("Invalid JSON format");
-        }
-    }
-
-    const handleWithdrawSign = async (index: number) => {
+    const handleWithdrawSign = async (withdraw: PendingWithdrawDoc) => {
         try {
             if (!sdk || !account) 
                 throw new Error("Please connect to MetaMask first.");
@@ -74,7 +54,6 @@ export default function Index() {
             if (!provider) 
                 throw new Error('MetaMask provider is not available.');
 
-            const withdraw = pendingWithdraws[index];
             // Request the user to sign the message
             const signature = await provider.request({
                 method: 'personal_sign',
@@ -82,6 +61,7 @@ export default function Index() {
             });
 
             await backend.signPendingWithdraw(withdraw._id, signature)
+            dispatch(fetchPendingWithdraws(user!))
             alert('Message signed successfully!');
         } catch (err) {
             console.log(err)
@@ -89,28 +69,37 @@ export default function Index() {
         }
     }
 
-    const handleWithdrawSubmit = async (index: number) => {
+    const handleWithdrawSubmit = async (withdraw: PendingWithdrawDoc) => {
         try {
-            const withdraw = pendingWithdraws[index];
             await CustodyServiceApi.addWithdraw({
                 agent: withdraw.agent.id,
-                signatures: Object.values(withdraw.signatures),
+                signatures: Object.values(withdraw.signatures!),
                 token: withdraw.token.symbol,
                 targetChain: withdraw.token.chain,
                 amount: withdraw.amount,
                 toAddress: withdraw.toAddress
             })
             await backend.submitPendingWithdraw(withdraw._id)
+            dispatch(fetchPendingWithdraws(account))
             alert('Withdraw submit successfully!');
         } catch (err) {
+            alert(err.message);
             console.log(err)
             setError((err as Error).message);
         }
     }
 
+    useEffect(
+        () => {
+            if(!selectedAgent)
+                setSelectedAgent(agents[0] || null)
+        },
+        [agents]
+    )
+
     useEffect(() => {
         if (!!selectedAgent) {
-            dispatch(fetchDepositAddresses({ agent: selectedAgent.id, chain: "SOL" }))
+            dispatch(fetchDepositAddresses({ agent: selectedAgent.id }))
             dispatch(fetchDeposits({ agent: selectedAgent.id }))
             dispatch(fetchWithdraws({ agent: selectedAgent.id }))
         }
@@ -121,10 +110,6 @@ export default function Index() {
             dispatch(fetchPendingWithdraws(user))
         }
     }, [user]);
-
-    const editToken = (e: any) => {
-        setSelectedToken(e.target.value)
-    }
 
     const agentsMap = useMemo(
         () => {
@@ -138,41 +123,38 @@ export default function Index() {
         [agents]
     );
 
-    const balances = useMemo(
-        () => {
-            let result = {}
-            for (let d of deposits) {
-                let key = d.deposit.token
-                if (!result[key]) {
-                    result[key] = cloneObject(d.deposit)
-                }
-                else {
-                    result[key].amount += d.deposit.amount
-                }
-            }
-            return result
-        },
-        [deposits]
-    );
-
-    const rangeBtnStyle = { marginLeft: ".5rem", marginRight: ".5rem", width: "3rem" }
-
-    return <div>
+    return <div className="page-content">
         <h1>Agents List: </h1>
-        {agents.map(a => (<p key={a.id} onClick={() => setSelectedAgent(a)} >
-            <span className={`${styles.clickable} ${a.id == selectedAgent?.id ? styles.selected : null}`} >{formatAddress(a.id)}</span>
-        </p>))}
-        {!!user && <AddAgent user={user} />}
-        {!!selectedAgent && (
-            <div>
-                <h5>Threshold</h5>
-                <div>{agentsMap[selectedAgent.id].threshold}</div>
-                <h5>Signers</h5>
-                {agentsMap[selectedAgent.id].signers.map(addr => (
-                    <div key={addr}>{addr}</div>
-                ))}
-            </div>
-        )}
+        <Tabs
+            tabs={[
+                ...agents.map(a => ({key: a.id, label: formatAddress(a.id)})),
+                {key: '+', label: "+"}
+            ]}
+            activeTab={selectedAgent?.id || ''}
+            onTabChange={id => {
+                if(id === '+') {
+                    if (addAgentRef.current) {
+                        addAgentRef.current.openModal();
+                    }
+                }
+                else{
+                    const agent = agents.find(a => a.id === id)
+                    // @ts-ignore
+                    setSelectedAgent(agent)
+                }
+            }}
+        >
+            {!!selectedAgent && (
+                <div>
+                    <div>Threshold: {agentsMap[selectedAgent.id].threshold}</div>
+                    <div>Signers: </div>
+                    {agentsMap[selectedAgent.id].signers.map(addr => (
+                        <div key={addr}>{addr}</div>
+                    ))}
+                </div>
+            )}
+        </Tabs>
+        {!!user && <AddAgent ref={addAgentRef} disableTriggerBtn={true} user={user} />}
         <h1>Pending Withdraws</h1>
         <table border={1}>
             <thead>
@@ -201,9 +183,9 @@ export default function Index() {
                         <td>{numSigned}</td>
                         <td>
                             {canSubmit ? (
-                                <CustomButton onClick={() => handleWithdrawSubmit(index)}>Submit</CustomButton>
+                                <CustomButton onClick={() => handleWithdrawSubmit(pw)}>Submit</CustomButton>
                             ) : (
-                                isNeedToSign && <CustomButton onClick={() => handleWithdrawSign(index)}>Sign</CustomButton>
+                                isNeedToSign && <CustomButton onClick={() => handleWithdrawSign(pw)}>Sign</CustomButton>
                             )}
                         </td>
                     </tr>
@@ -211,111 +193,12 @@ export default function Index() {
             </tbody>
         </table>
         {/* {JSON.stringify(pendingWithdraws)} */}
-        <h1>Chain: Solana</h1>
-        {!!selectedAgent &&
-            <div>
-                <span>Create Deposit Address in range </span>
-                <CustomInput
-                    style={rangeBtnStyle}
-                    variant="primary"
-                    className=""
-                    value={rangeFrom}
-                    onChange={e => setRangeFrom(e.target.value)}
-                />
-                <span>, </span>
-                <CustomInput
-                    style={rangeBtnStyle}
-                    variant="primary"
-                    className=""
-                    value={rangeTo}
-                    onChange={e => setRangeTo(e.target.value)}
-                />
-                <span> : </span>
-                <CustomButton
-                    variant="primary"
-                    onClick={handleCreateAddress}
-                >Create</CustomButton>
-                <h1>Deposit Addresses: </h1>
-                <div>
-                    {Object.keys(depositAddresses).map(i => (
-                        <div key={i}>[{i}]: {depositAddresses[i].address}</div>
-                    ))}
-                </div>
-                <h1>Balance: </h1>
-                <div>
-                    {Object.keys(balances).map(token => (
-                        <div key={token}>
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="withdrawToken"
-                                    value={token}
-                                    checked={selectedToken == token}
-                                    onChange={editToken}
-                                />
-                                {token}: {balances[token].amount / (10 ** balances[token].decimals)}
-                            </label>
-                        </div>
-                    ))}
-                    <WithdrawAddBox
-                        agent={selectedAgent}
-                        balances={balances}
-                        token={selectedToken}
-                    />
-                </div>
-                <h1>Deposit History: </h1>
-                <div>
-                    <table border={1}>
-                        <thead>
-                            <tr>
-                                <th>Chain</th>
-                                <th>Address</th>
-                                <th>Token</th>
-                                <th>amount</th>
-                                <th>TX</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {deposits.map(d => (
-                                <tr key={d.txHash}>
-                                    <td>{d.chain}</td>
-                                    <td>{formatAddress(d.address)}</td>
-                                    <td>{d.deposit.token}</td>
-                                    <td>{d.deposit.amount / (10 ** d.deposit.decimals)}</td>
-                                    <td>{formatAddress(d.txHash)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <h1>Withdraw History: </h1>
-                <div>
-                    <table border={1}>
-                        <thead>
-                            <tr>
-                                <th>To Chain</th>
-                                <th>Token</th>
-                                <th>amount</th>
-                                <th>To Address</th>
-                                <th>Status</th>
-                                <th>TX</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {withdraws.map(d => (
-                                <tr key={d.id}>
-                                    <td>{d.targetChain}</td>
-                                    <td>{d.token.symbol}</td>
-                                    <td>{d.amount / (10 ** d.token.decimals)}</td>
-                                    <td>{formatAddress(d.toAddress)}</td>
-                                    <td>{d.status}</td>
-                                    <td>{formatAddress(d.txHash)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
+        <Tabs 
+            activeTab={selectedChain} 
+            onTabChange={setSelectedChain} 
+            tabs={[{key: "SOL", label: "Solana"}, {key: "TON", label: "Telegram Ton"}]}
+        >
+            {!!selectedAgent && !!selectedChain &&  <AgentChainPan agent={selectedAgent} chain={selectedChain} />}
+        </Tabs>
     </div>;
 }

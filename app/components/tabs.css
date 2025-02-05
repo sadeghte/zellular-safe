@@ -1,0 +1,52 @@
+/* Container for the entire tabs component */
+.tabs-container {
+    margin: 1rem auto;
+}
+
+/* Container for the tab buttons */
+.tabs-buttons {
+    display: flex;
+    /* gap: 10px; */
+}
+
+/* Base style for tab buttons */
+.tab-button {
+    padding: 10px 20px;
+    border: none;
+    background: #f0f0f0;
+    color: #000;
+    cursor: pointer;
+    border-radius: 10px 10px 0 0;
+    font-size: 16px;
+    transition: background 0.3s ease, color 0.3s ease;
+    border: 1px solid #ddd;
+    border-bottom: -1px;
+}
+
+.tab-button:active {
+    background: #f9f9f9;
+}
+
+/* Active tab button style */
+.tab-button.active {
+    background: #f9f9f9;
+    /* color: #fff; */
+    border-bottom-width: 0;
+    /* padding-bottom: 3rem; */
+    margin-bottom: -1px;
+}
+
+/* Container for the active tab content */
+.tab-content {
+    padding: 20px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+/* App container styling */
+.app-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+}

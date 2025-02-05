@@ -9,12 +9,22 @@ export interface Agent {
     threshold: number;
 }
 
+export interface DepositAddressDoc {
+    agent: string;
+    account: number;
+    user: number;
+    chain: string;
+    address: string;
+    memo?: string,
+    active: boolean;
+}
+
 export interface CustodySliceState {
     user: string|null;
     // user agents list
     agents: Agent[];
     // map user index to its address
-    depositAddresses: Record<string, string>;
+    depositAddresses: DepositAddressDoc[];
     // agent deposit history
     deposits: any[];
     // withdraws that is not signed completely or not sent to the zellular network
@@ -28,7 +38,7 @@ export interface CustodySliceState {
 const initialState: CustodySliceState = {
     user: null,
     agents: [],
-    depositAddresses: {},
+    depositAddresses: [],
     deposits: [],
     pendingWithdraws: [],
     withdraws: [],
@@ -46,7 +56,7 @@ export const custodySlice = createAppSlice({
         setAgents: create.reducer((state, action: PayloadAction<Agent[]>) => {
             state.agents = action.payload;
         }),
-        setDepositAddresses: create.reducer((state, action: PayloadAction<Record<string, string>>) => {
+        setDepositAddresses: create.reducer((state, action: PayloadAction<DepositAddressDoc[]>) => {
             state.depositAddresses = action.payload;
         }),
         fetchAgents: create.asyncThunk(
@@ -69,8 +79,8 @@ export const custodySlice = createAppSlice({
             },
         ),
         fetchDepositAddresses: create.asyncThunk(
-            async (args: {agent: string, chain: string}) => {
-                const response = await CustodyApi.getDepositAddresses(args.agent, args.chain);
+            async (args: {agent: string}) => {
+                const response:DepositAddressDoc[] = await CustodyApi.getDepositAddresses(args.agent);
                 return response;
             },
             {

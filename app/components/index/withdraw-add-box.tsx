@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSDK } from "@metamask/sdk-react";
 import CustomInput from "../input";
 import CustomButton from "../button";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { fetchWithdraws, selectDeposits } from "@/lib/features/custody/custodySlice";
+import { fetchWithdraws, selectDeposits, fetchPendingWithdraws } from "@/lib/features/custody/custodySlice";
 import * as CustodyServiceApi from "@/lib/features/custody/custodyApi"
 import * as backend from "@/lib/backend";
 
@@ -12,18 +13,19 @@ interface WithdrawBoxProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
     agent: any,
     balances: Record<string, bigint>;
     token: string;
+    chain: string;
 }
 
-export const WithdrawAddBox: React.FC<WithdrawBoxProps> = (params: WithdrawBoxProps) => {
+export const WithdrawAddBox: React.FC<WithdrawBoxProps> = ({chain, agent, token, balances}) => {
     const dispatch = useAppDispatch();
+    const { sdk, account, chainId } = useSDK();
     const [amount, setAmount] = useState("")
     const [toAddress, setWithdrawTo] = useState("")
-    const {agent, balances, token} = params
 
     const withdraw = async (e: any) => {
         e.preventDefault();
 
-        if(token == null) {
+        if(!token) {
             alert("select token")
             return;
         }
@@ -45,11 +47,12 @@ export const WithdrawAddBox: React.FC<WithdrawBoxProps> = (params: WithdrawBoxPr
                 token: {
                     symbol: token,
                     contract: balances[token].contract,
-                    chain: "SOL",
+                    chain,
                 }, 
                 amount: withdrawAmount, 
                 toAddress
             })
+            dispatch(fetchPendingWithdraws(account!))
             alert("success");
         }
         catch(e) {

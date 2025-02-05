@@ -47,7 +47,7 @@ export const ConnectWalletButton = () => {
                 <div className={styles.navItem}>
                     <span className={styles.avatar}></span>
                     <div className={styles.addrBalance}>
-                        <span>0x7D43...45Fd</span>
+                        <span>{formatAddress(account)}</span>
                         <span>12.2 ETH 0000</span>
                     </div>
                 </div>

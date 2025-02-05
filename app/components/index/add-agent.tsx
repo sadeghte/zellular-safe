@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import CustomInput from "../input";
 import CustomButton from "../button";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
@@ -9,16 +9,26 @@ import * as CustodyServiceApi from "@/lib/features/custody/custodyApi"
 import Modal from "../modal";
 
 interface AddAgentProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    disableTriggerBtn?: boolean,
     user: string,
 }
 
-export const AddAgent: React.FC<AddAgentProps> = (props: AddAgentProps) => {
+export interface AddAgentRef {
+    openModal: () => void;
+}
+
+const AddAgent = forwardRef<AddAgentRef, AddAgentProps>(({user, disableTriggerBtn}, ref) => {
     const dispatch = useAppDispatch();
     const [threshold, setThreshold] = useState(1)
     const [count, setCount] = useState(2)
     const [owners, setOwners] = useState(Array(count).fill(""))
     const [isOpen, setIsOpen] = useState(false)
     const [error, setError] = useState("")
+
+    // Expose the openModal method to the parent via ref
+    useImperativeHandle(ref, () => ({
+        openModal: () => setIsOpen(true),
+    }));
 
     const handleThresholdChange = (e) => {
         const newValue = parseInt(e.target.value, 10);
@@ -49,7 +59,7 @@ export const AddAgent: React.FC<AddAgentProps> = (props: AddAgentProps) => {
 
     const handleAddAgent = async (e: any) => {
         e.preventDefault();
-        if(!props.user) {
+        if(!user) {
             alert("AddAgent's user not selected")
             return;
         }
@@ -67,7 +77,7 @@ export const AddAgent: React.FC<AddAgentProps> = (props: AddAgentProps) => {
         try {
             const result = await CustodyServiceApi.registerAgent(owners, threshold);
             alert("Agent registered, TX: " + result)
-            dispatch(fetchAgents(props.user))
+            dispatch(fetchAgents(user))
             setIsOpen(false)
         } catch (err) {
             setError("Error: " + err.message);
@@ -76,10 +86,12 @@ export const AddAgent: React.FC<AddAgentProps> = (props: AddAgentProps) => {
 
     return (
         <div>
-            <CustomButton
-                variant="primary"
-                onClick={() => setIsOpen(true)}
-            >Add New Agent</CustomButton>
+            {!disableTriggerBtn && (
+                <CustomButton
+                    variant="primary"
+                    onClick={() => setIsOpen(true)}
+                >Add New Agent</CustomButton>
+            )}
 
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
                 <div style={{ marginBottom: '16px' }}>
@@ -134,4 +146,7 @@ export const AddAgent: React.FC<AddAgentProps> = (props: AddAgentProps) => {
 
         </div>
     );
-}
+});
+
+AddAgent.displayName = "AddAgent"; // Set display name for debugging
+export default AddAgent;

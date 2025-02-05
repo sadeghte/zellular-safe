@@ -1,12 +1,20 @@
+import { DepositAddressDoc } from "./custodySlice";
+import axios from "axios";
+
+
 const CUSTODY_URL = process.env.NEXT_PUBLIC_CUSTODY_SERVICE_RPC!
 
 const callRpcMethod = async (method: string, params: any) => {
-    const response = await fetch(CUSTODY_URL, {
-        method: "POST",
+    // const response = await fetch(CUSTODY_URL, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ jsonrpc: "2.0", method , params }),
+    // });
+    const response = await axios.post(CUSTODY_URL, { jsonrpc: "2.0", method , params }, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", method , params }),
-    });
-    return await response.json();
+      });
+
+    return response.data;
 }
 
 export const registerAgent = async (signers: string[], threshold: number) => {
@@ -25,8 +33,8 @@ export const createDepositAddressRange = async (agent: string, chain: string, ad
     return response.result;
 }
 
-export const getDepositAddresses = async (agent: string, chain: string): Promise<Record<string, string>> => {
-    const response = await callRpcMethod("getDepositAddresses", { agent, chain });
+export const getDepositAddresses = async (agent: string): Promise<DepositAddressDoc[]> => {
+    const response = await callRpcMethod("getDepositAddresses", { agent });
     return response.result;
 }
 
