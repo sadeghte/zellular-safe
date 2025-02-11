@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 import styles from "../styles/layout.module.css";
 import { ConnectWalletButton } from "./web3-connect";
 
 export const Nav = () => {
 	const pathname = usePathname();
+    const params = useParams();
+    // @ts-ignore
+    const agentId:string = params.agentId; // Access the `id` parameter
 
 	return (
 		<nav className={styles.nav}>
@@ -19,33 +22,37 @@ export const Nav = () => {
 					Zellular Safe
 				</Link>
 			</div>
-			<div className={styles.navItem}>
-				<Link
-					className={`${styles.link} ${pathname === "/api-test" ? styles.active : ""
-						}`}
-					href="/api-test"
-				>
-					Api Test
-				</Link>
-			</div>
-			<div className={styles.navItem}>
-				<Link
-					className={`${styles.link} ${pathname === "/counter" ? styles.active : ""
-						}`}
-					href="/counter"
-				>
-					Counter
-				</Link>
-			</div>
-			<div className={styles.navItem}>
-				<Link
-					className={`${styles.link} ${pathname === "/withdraw" ? styles.active : ""
-						}`}
-					href="/withdraw"
-				>
-					Withdraw
-				</Link>
-			</div>
+            {!!agentId && (
+                <>
+                    <div className={styles.navItem}>
+                        <Link
+                            className={`${styles.link} ${pathname === `/agent/${agentId}` ? styles.active : ""
+                                }`}
+                            href={`/agent/${agentId}`}
+                        >
+                            Home
+                        </Link>
+                    </div>
+                    <div className={styles.navItem}>
+                        <Link
+                            className={`${styles.link} ${pathname === `/agent/${agentId}/deposit` ? styles.active : ""
+                                }`}
+                            href={`/agent/${agentId}/deposit`}
+                        >
+                            Deposit
+                        </Link>
+                    </div>
+                    <div className={styles.navItem}>
+                        <Link
+                            className={`${styles.link} ${pathname === `/agent/${agentId}/withdraw` ? styles.active : ""
+                                }`}
+                            href={`/agent/${agentId}/withdraw`}
+                        >
+                            Withdraw
+                        </Link>
+                    </div>
+                </>
+            )}
             <ConnectWalletButton />
 		</nav>
 	);

@@ -45,7 +45,7 @@ export const ConnectWalletButton = () => {
             <Popover.Trigger asChild>
                 {/* <span>{formatAddress(account)}</span> */}
                 <div className={styles.navItem}>
-                    <span className={styles.avatar}></span>
+                    <span className="avatar"></span>
                     <div className={styles.addrBalance}>
                         <span>{formatAddress(account)}</span>
                         <span>12.2 ETH 0000</span>

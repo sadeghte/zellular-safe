@@ -1,4 +1,5 @@
-import { DepositAddressDoc } from "./custodySlice";
+
+import { Agent, DepositAddressDoc } from "./custodySlice";
 import axios from "axios";
 
 
@@ -22,9 +23,13 @@ export const registerAgent = async (signers: string[], threshold: number) => {
     return response.result;
 }
 
-// A mock function to mimic making an async request for data
-export const getUserAgents = async (userAddress: string) => {
+export const getUserAgents = async (userAddress: string): Promise<Agent[]> => {
     const response = await callRpcMethod("getUserAgents", { userAddress });
+    return response.result;
+};
+
+export const getAgentData = async (agent: string) => {
+    const response = await callRpcMethod("getAgentData", { agent });
     return response.result;
 };
 

@@ -9,6 +9,13 @@ export interface Agent {
     threshold: number;
 }
 
+export interface AgentData {
+    depositAddresses: DepositAddressDoc[],
+    deposits: any[],
+    withdraws: any[],
+    status: "idle" | "loading" | "failed";
+}
+
 export interface DepositAddressDoc {
     agent: string;
     account: number;
@@ -22,7 +29,9 @@ export interface DepositAddressDoc {
 export interface CustodySliceState {
     user: string|null;
     // user agents list
-    agents: Agent[];
+    agents: Record<string, Agent>;
+    // user agens data
+    agentsData: Record<string, AgentData>,
     // map user index to its address
     depositAddresses: DepositAddressDoc[];
     // agent deposit history
@@ -37,7 +46,9 @@ export interface CustodySliceState {
 
 const initialState: CustodySliceState = {
     user: null,
-    agents: [],
+    agents: {},
+    agentsData: {},
+    
     depositAddresses: [],
     deposits: [],
     pendingWithdraws: [],
@@ -54,7 +65,14 @@ export const custodySlice = createAppSlice({
             state.user = action.payload;
         }),
         setAgents: create.reducer((state, action: PayloadAction<Agent[]>) => {
-            state.agents = action.payload;
+            state.agents = action.payload.reduce((obj: any, a) => (obj[a.id] = a, obj), {});
+        }),
+        setAgentData: create.reducer((state, action: PayloadAction<{agent: string, agentData: AgentData}>) => {
+            let {agent, agentData} = action.payload;
+            state.agentsData = {
+                ...state.agentsData,
+                [agent]: agentData,
+            };
         }),
         setDepositAddresses: create.reducer((state, action: PayloadAction<DepositAddressDoc[]>) => {
             state.depositAddresses = action.payload;
@@ -63,7 +81,7 @@ export const custodySlice = createAppSlice({
             async (user: string) => {
                 const response = await CustodyApi.getUserAgents(user);
                 // The value we return becomes the `fulfilled` action payload
-                return response;
+                return response.reduce((obj: any, a) => (obj[a.id] = a, obj), {});
             },
             {
                 pending: (state) => {
@@ -72,6 +90,27 @@ export const custodySlice = createAppSlice({
                 fulfilled: (state, action) => {
                     state.status = "idle";
                     state.agents = action.payload;
+                },
+                rejected: (state) => {
+                    state.status = "failed";
+                },
+            },
+        ),
+        fetchAgentData: create.asyncThunk(
+            async (agent: string) => {
+                const response = await CustodyApi.getAgentData(agent);
+                return {agent, agentData: response};
+            },
+            {
+                pending: (state) => {
+                    state.status = "loading";
+                },
+                fulfilled: (state, action) => {
+                    state.status = "idle";
+                    state.agentsData = {
+                        ...state.agentsData,
+                        [action.payload.agent]: action.payload.agentData
+                    }
                 },
                 rejected: (state) => {
                     state.status = "failed";
@@ -154,6 +193,7 @@ export const custodySlice = createAppSlice({
     selectors: {
         selectUser: (custody) => custody.user,
         selectAgents: (custody) => custody.agents,
+        selectAgentsData: (custody) => custody.agentsData,
         selectDepositAddresses: (custody) => custody.depositAddresses,
         selectDeposits: (custody) => custody.deposits,
         selectPendingWithdraws: (custody) => custody.pendingWithdraws,
@@ -162,7 +202,25 @@ export const custodySlice = createAppSlice({
 });
 
 // Action creators are generated for each case reducer function.
-export const { setUser, setAgents, fetchAgents, fetchDepositAddresses, fetchDeposits, fetchPendingWithdraws, fetchWithdraws } = custodySlice.actions;
+export const { 
+    setUser, 
+    setAgents, 
+    setAgentData,
+    fetchAgents, 
+    fetchAgentData,
+    fetchDepositAddresses, 
+    fetchDeposits, 
+    fetchPendingWithdraws, 
+    fetchWithdraws 
+} = custodySlice.actions;
 
 // Selectors returned by `slice.selectors` take the root state as their first argument.
-export const { selectUser, selectAgents, selectDepositAddresses, selectDeposits, selectPendingWithdraws, selectWithdraws } = custodySlice.selectors;
+export const { 
+    selectUser, 
+    selectAgents, 
+    selectAgentsData,
+    selectDepositAddresses, 
+    selectDeposits, 
+    selectPendingWithdraws, 
+    selectWithdraws 
+} = custodySlice.selectors;

@@ -90,7 +90,7 @@ const AddAgent = forwardRef<AddAgentRef, AddAgentProps>(({user, disableTriggerBt
                 <CustomButton
                     variant="primary"
                     onClick={() => setIsOpen(true)}
-                >Add New Agent</CustomButton>
+                >Add New Safe</CustomButton>
             )}
 
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>

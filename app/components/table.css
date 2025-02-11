@@ -1,0 +1,31 @@
+/* Table container */
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+}
+
+.custom-table thead tr {
+    border-bottom: 1px solid #ddd;
+    font-weight: bolder;
+}
+
+/* Table rows */
+.custom-tr:not(:last-child) {
+    border-bottom: 1px solid #ddd;
+}
+
+.custom-tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.custom-table tbody .custom-tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Table cells */
+.custom-td, .custom-th {
+    padding: 12px;
+    text-align: left;
+    /* border: 1px solid #ddd; */
+}

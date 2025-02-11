@@ -31,6 +31,7 @@ import Link from "next/link";
 import { Tabs } from "../tabs";
 import { AgentChainPan } from "../agent-chain-pan";
 import { PendingWithdrawDoc } from "@/models/pending-withdraw";
+import { Span } from "next/dist/trace";
 
 export default function Index() {
     const addAgentRef = useRef<AddAgentRef>(null);
@@ -38,61 +39,19 @@ export default function Index() {
     const user = useAppSelector(selectUser);
     const agents = useAppSelector(selectAgents);
 
-    const pendingWithdraws = useAppSelector(selectPendingWithdraws);
     const { sdk, account, provider } = useSDK();
     const [selectedChain, setSelectedChain] = useState("SOL")
 
     const [error, setError] = useState(null);
     const [selectedAgent, setSelectedAgent] = useState(null);
 
-    const handleWithdrawSign = async (withdraw: PendingWithdrawDoc) => {
-        try {
-            if (!sdk || !account) 
-                throw new Error("Please connect to MetaMask first.");
-
-            const provider = sdk.getProvider();
-            if (!provider) 
-                throw new Error('MetaMask provider is not available.');
-
-            // Request the user to sign the message
-            const signature = await provider.request({
-                method: 'personal_sign',
-                params: [withdraw.approvalMessage, account],
-            });
-
-            await backend.signPendingWithdraw(withdraw._id, signature)
-            dispatch(fetchPendingWithdraws(user!))
-            alert('Message signed successfully!');
-        } catch (err) {
-            console.log(err)
-            setError((err as Error).message);
-        }
-    }
-
-    const handleWithdrawSubmit = async (withdraw: PendingWithdrawDoc) => {
-        try {
-            await CustodyServiceApi.addWithdraw({
-                agent: withdraw.agent.id,
-                signatures: Object.values(withdraw.signatures!),
-                token: withdraw.token.symbol,
-                targetChain: withdraw.token.chain,
-                amount: withdraw.amount,
-                toAddress: withdraw.toAddress
-            })
-            await backend.submitPendingWithdraw(withdraw._id)
-            dispatch(fetchPendingWithdraws(account))
-            alert('Withdraw submit successfully!');
-        } catch (err) {
-            alert(err.message);
-            console.log(err)
-            setError((err as Error).message);
-        }
-    }
-
     useEffect(
         () => {
-            if(!selectedAgent)
-                setSelectedAgent(agents[0] || null)
+            if(!selectedAgent) {
+                let id:string = Object.keys(agents)[0];
+                // @ts-ignore
+                setSelectedAgent(agents[id] || null)
+            }
         },
         [agents]
     )
@@ -111,94 +70,22 @@ export default function Index() {
         }
     }, [user]);
 
-    const agentsMap = useMemo(
-        () => {
-            let result = {}
-            for (let a of agents) {
-                let key = a.id
-                result[key] = a
-            }
-            return result
-        },
-        [agents]
-    );
-
     return <div className="page-content">
-        <h1>Agents List: </h1>
-        <Tabs
-            tabs={[
-                ...agents.map(a => ({key: a.id, label: formatAddress(a.id)})),
-                {key: '+', label: "+"}
-            ]}
-            activeTab={selectedAgent?.id || ''}
-            onTabChange={id => {
-                if(id === '+') {
-                    if (addAgentRef.current) {
-                        addAgentRef.current.openModal();
-                    }
-                }
-                else{
-                    const agent = agents.find(a => a.id === id)
-                    // @ts-ignore
-                    setSelectedAgent(agent)
-                }
-            }}
-        >
-            {!!selectedAgent && (
-                <div>
-                    <div>Threshold: {agentsMap[selectedAgent.id].threshold}</div>
-                    <div>Signers: </div>
-                    {agentsMap[selectedAgent.id].signers.map(addr => (
-                        <div key={addr}>{addr}</div>
-                    ))}
-                </div>
-            )}
-        </Tabs>
-        {!!user && <AddAgent ref={addAgentRef} disableTriggerBtn={true} user={user} />}
-        <h1>Pending Withdraws</h1>
-        <table border={1}>
-            <thead>
-                <tr>
-                    <th>Coin</th>
-                    <th>Target Chain</th>
-                    <th>Amount</th>
-                    <th>To Address</th>
-                    <th>Threshold</th>
-                    <th># Owners Signed</th>
-                </tr>
-            </thead>
-            <tbody>
-                {pendingWithdraws.filter(w => !w.submitted).map((pw, index) => {
-                    const numSigned = Object.keys(pw.signatures || {}).length;
-                    const threshold = pw.agent.threshold;
-                    const canSubmit = numSigned >= threshold;
-                    const alreadySigned = Object.keys(pw.signatures || {}).includes(account!.toLowerCase());
-                    const isNeedToSign = numSigned < threshold && !alreadySigned;
-                    return <tr key={index}>
-                        <td>{pw.token.symbol}</td>
-                        <td>{pw.token.chain}</td>
-                        <td>{pw.amount}</td>
-                        <td>{formatAddress(pw.toAddress)}</td>
-                        <td>{pw.agent.threshold}</td>
-                        <td>{numSigned}</td>
-                        <td>
-                            {canSubmit ? (
-                                <CustomButton onClick={() => handleWithdrawSubmit(pw)}>Submit</CustomButton>
-                            ) : (
-                                isNeedToSign && <CustomButton onClick={() => handleWithdrawSign(pw)}>Sign</CustomButton>
-                            )}
-                        </td>
-                    </tr>
-                })}
-            </tbody>
-        </table>
-        {/* {JSON.stringify(pendingWithdraws)} */}
-        <Tabs 
-            activeTab={selectedChain} 
-            onTabChange={setSelectedChain} 
-            tabs={[{key: "SOL", label: "Solana"}, {key: "TON", label: "Telegram Ton"}]}
-        >
-            {!!selectedAgent && !!selectedChain &&  <AgentChainPan agent={selectedAgent} chain={selectedChain} />}
-        </Tabs>
+
+        <div style={{display: 'flex', alignItems: 'center'}}>
+            <h1 style={{flexGrow: 1}}>My Safe Accounts</h1>
+            {!!user && <AddAgent ref={addAgentRef} user={user} />}
+        </div>
+        <div className="pan1">
+            {Object.values(agents).map(a => (
+                <Link key={a.id} href={`/agent/${a.id}`}>
+                    <div className="box-hover-1">
+                        <div className="avatar x2"></div>
+                        <span className="acc-threshold">{a.threshold}/{a.signers.length}</span>
+                        {a.signers.map(s => <span style={{margin: '0 0.5rem'}} key={s}>{formatAddress(s)}</span>)}
+                    </div>
+                </Link>
+            ))}
+        </div>
     </div>;
 }

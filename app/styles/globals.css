@@ -1,10 +1,10 @@
 html,
 body {
-  min-height: 100vh;
-  padding: 0 0;
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background-color: #f4f4f4;
+    min-height: 100vh;
+    padding: 0 0;
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background-color: #f4f4f4;
 }
 
 .page-content {
@@ -12,10 +12,167 @@ body {
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
+
+
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    padding: 0 15px;
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 500;
+    height: 35px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: background-color 0.1s ease-in-out;
+}
+
+.button.primary:hover {
+    background-color: #f4f4f4;
+}
+
+.button.green {
+    background-color: var(--green-4);
+    color: var(--green-11);
+}
+
+.button.green:hover {
+    background-color: var(--green-5);
+}
+
+.button.green:focus {
+    box-shadow: 0 0 0 2px var(--green-7);
+}
+
+.avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-size: cover;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4IDgiIHNoYXBlLXJlbmRlcmluZz0ib3B0aW1pemVTcGVlZCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48cGF0aCBmaWxsPSJoc2woMzU4IDQ0JSAzNiUpIiBkPSJNMCwwSDhWOEgweiIvPjxwYXRoIGZpbGw9ImhzbCgyNTIgNDUlIDQ2JSkiIGQ9Ik0yLDJoMXYxaC0xek01LDJoMXYxaC0xek0wLDNoMXYxaC0xek03LDNoMXYxaC0xek0xLDNoMXYxaC0xek02LDNoMXYxaC0xek0zLDNoMXYxaC0xek00LDNoMXYxaC0xek0yLDRoMXYxaC0xek01LDRoMXYxaC0xek0zLDVoMXYxaC0xek00LDVoMXYxaC0xek0xLDZoMXYxaC0xek02LDZoMXYxaC0xek0wLDdoMXYxaC0xek03LDdoMXYxaC0xeiIvPjxwYXRoIGZpbGw9ImhzbCgzMTUgODUlIDEzJSkiIGQ9Ik0wLDBoMXYxaC0xek03LDBoMXYxaC0xek0wLDJoMXYxaC0xek03LDJoMXYxaC0xek0zLDJoMXYxaC0xek00LDJoMXYxaC0xek0wLDRoMXYxaC0xek03LDRoMXYxaC0xek0yLDZoMXYxaC0xek01LDZoMXYxaC0xek0yLDdoMXYxaC0xek01LDdoMXYxaC0xeiIvPjwvc3ZnPg==");
+    margin-right: 0.5em;
+}
+
+.avatar.x2 {
+    width: 3rem;
+    height: 3rem;
+}
+
+.pan1 {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.pan1 .head {
+    border-bottom: 1px solid #dcdee0;
+    margin: -1rem -1rem 1rem -1rem;
+    line-height: 2rem;
+    padding: 0 1rem;
+    font-weight: bold;
+}
+
+.box-hover-1 {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dcdee0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: background-color 0.1s ease-in-out;
+    cursor: pointer;
+}
+
+.box-hover-1:hover {
+    background-color: #f4f4f4
+}
+
+.acc-threshold {
+    width: auto;
+    /* Dynamic width based on content */
+    height: auto;
+    /* Default height */
+    aspect-ratio: 1 / 1;
+    /* Ensures height = width */
+    border-radius: 50%;
+    display: inline-block;
+    /* Ensures it only takes necessary space */
+    padding: 4px;
+    /* Optional padding */
+    background-color: aquamarine;
+    font-size: 0.75rem;
+    font-weight: bolder;
+    margin-left: -2rem;
+    margin-bottom: 2rem;
+}
+
+.token-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.token-icon.chain-ind {
+    width: 1rem;
+    height: 1rem;
+    margin: 1.5rem 0 0 -0.3rem;
+}
+
+ol {
+    list-style-type: none; /* Remove default numbering */
+    padding: 0;
+    border-left: 1px solid rgb(146 230 167);
+}
+
+ol li {
+    position: relative;
+    padding-left: 30px; /* Space for custom number */
+    margin: 10px 0;
+}
+
+ol li::before {
+    content: counter(list-item); /* Use the list item number */
+    counter-increment: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgb(146 230 167);
+    color: rgb(48, 74, 54);
+    font-size: 12px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    width: 18px;
+    border-radius: 50%;
+    margin-left: -10px;
+}
+
+
+/* For WebKit Browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 0px;  /* Hide the scrollbar track */
+    background: transparent; /* Ensure it blends in */
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+span.pointer {
+    font-weight: bold;
+    color: rgb(42, 80, 156);
+}
+
+span.pointer:hover {
+    color: rgb(86, 107, 150);
+}
+  

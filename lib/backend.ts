@@ -28,5 +28,5 @@ export async function submitPendingWithdraw(_id: string) {
 }
 
 export async function getPendingWithdraws(user: string) {
-    return await callRpc('/api/jsonrpc', "getWithdraws", {user});
+    return await callRpc('/api/jsonrpc', "getWithdraws", {user, submitted: false});
 }

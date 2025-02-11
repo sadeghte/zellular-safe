@@ -18,7 +18,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 
     return (
         <button
-            className={styles.Button}
+            className={`button ${variant}`}
             disabled={isLoading}
             {...props}
         >
