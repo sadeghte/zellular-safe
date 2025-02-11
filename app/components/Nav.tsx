@@ -16,6 +16,7 @@ export const Nav = () => {
 		<nav className={styles.nav}>
 			<div className={`${styles.navItem} ${styles.flexFill}`}>
 				<Link
+                    prefetch
 					className={`${styles.link} ${pathname === "/" ? styles.active : ""}`}
 					href="/"
 				>
@@ -26,15 +27,18 @@ export const Nav = () => {
                 <>
                     <div className={styles.navItem}>
                         <Link
+                            prefetch
                             className={`${styles.link} ${pathname === `/agent/${agentId}` ? styles.active : ""
                                 }`}
                             href={`/agent/${agentId}`}
+
                         >
                             Home
                         </Link>
                     </div>
                     <div className={styles.navItem}>
                         <Link
+                            prefetch
                             className={`${styles.link} ${pathname === `/agent/${agentId}/deposit` ? styles.active : ""
                                 }`}
                             href={`/agent/${agentId}/deposit`}
@@ -44,6 +48,7 @@ export const Nav = () => {
                     </div>
                     <div className={styles.navItem}>
                         <Link
+                            prefetch
                             className={`${styles.link} ${pathname === `/agent/${agentId}/withdraw` ? styles.active : ""
                                 }`}
                             href={`/agent/${agentId}/withdraw`}

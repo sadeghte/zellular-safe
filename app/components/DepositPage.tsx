@@ -97,7 +97,7 @@ export default function DepositPage() {
                             </Tr>
                         </THead>
                         <TBody>
-                            {agentsData[agent.id].depositAddresses.filter(d => d.chain === selectedChain).map((d, i) => (
+                            {agentsData[agentId].depositAddresses.filter(d => d.chain === selectedChain).map((d, i) => (
                                 <Tr key={i}>
                                     <Td>{i}</Td>
                                     <Td><WithCopy value={d.address}>{d.address}</WithCopy></Td>
