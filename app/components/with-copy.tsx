@@ -13,6 +13,9 @@ export const WithCopy: React.FC<ComponentProps> = ({ value, children }) => {
                 await navigator.clipboard.writeText(value);
                 alert("Text copied.")
             }
+            else{
+                console.log("Clipboard copy not granted")
+            }
         } catch (err) {
             console.error("Failed to copy:", err);
         }
