@@ -12,9 +12,9 @@ import { Table, TBody, Td, THead, Tr } from "@/app/components/table";
 export default function ItemPage() {
     const params = useParams();
     // @ts-ignore
-    const agentId:string = params.agentId; // Access the `id` parameter
+    const agentId: string = params.agentId; // Access the `id` parameter
     const dispatch = useAppDispatch();
-    
+
     const agents = useAppSelector(selectAgents);
     const agentsData = useAppSelector(selectAgentsData)
     const deposits = useAppSelector(selectDeposits);
@@ -24,12 +24,12 @@ export default function ItemPage() {
     }, [agents, agentId])
 
     useEffect(() => {
-            if (!!agentId) {
-                dispatch(fetchAgentData(agentId))
-            }
-        }, [agentId]);
+        if (!!agentId) {
+            dispatch(fetchAgentData(agentId))
+        }
+    }, [agentId]);
 
-    const currentAgentData = useMemo(() => agentsData[agentId], [agentId])
+    const currentAgentData = useMemo(() => agentsData[agentId], [agentId, agentsData])
 
     const balances = useMemo(
         () => {
