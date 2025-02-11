@@ -8,8 +8,11 @@ interface ComponentProps {
 export const WithCopy: React.FC<ComponentProps> = ({ value, children }) => {
     const copyToClipboard = async () => {
         try {
-            await navigator.clipboard.writeText(value);
-            alert("Text copied.")
+            const permissionStatus = await navigator.permissions.query({ name: "clipboard-write" });
+            if (permissionStatus.state === "granted") {
+                await navigator.clipboard.writeText(value);
+                alert("Text copied.")
+            }
         } catch (err) {
             console.error("Failed to copy:", err);
         }
