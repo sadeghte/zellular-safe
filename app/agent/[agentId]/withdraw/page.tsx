@@ -7,6 +7,6 @@ export default function page() {
     return <WithdrawPage />
 }
 
-export const metadata: Metadata = {
-    title: "Withdraw",
-};
+// export const metadata: Metadata = {
+//     title: "Withdraw",
+// };

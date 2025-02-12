@@ -7,6 +7,6 @@ export default function page() {
     return <DepositPage />
 }
 
-export const metadata: Metadata = {
-    title: "Deposit",
-};
+// export const metadata: Metadata = {
+//     title: "Deposit",
+// };
