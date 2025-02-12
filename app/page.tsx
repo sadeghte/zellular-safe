@@ -1,4 +1,3 @@
-"use client";
 
 import type { Metadata } from "next";
 import Index from "./components/index/Index";
