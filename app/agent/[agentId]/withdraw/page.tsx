@@ -1,3 +1,5 @@
+"use client";
+
 import WithdrawPage from "@/app/components/WithdrawPage";
 import type { Metadata } from "next";
 

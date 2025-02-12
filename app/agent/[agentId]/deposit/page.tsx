@@ -1,3 +1,5 @@
+"use client";
+
 import DepositPage from "@/app/components/DepositPage";
 import type { Metadata } from "next";
 
