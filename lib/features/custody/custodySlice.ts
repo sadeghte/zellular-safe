@@ -10,9 +10,9 @@ export interface Agent {
 }
 
 export interface AgentData {
-    depositAddresses: DepositAddressDoc[],
-    deposits: any[],
-    withdraws: any[],
+    depositAddresses: DepositAddressDoc[];
+    deposits: any[];
+    withdraws: any[];
     status: "idle" | "loading" | "failed";
 }
 
@@ -22,8 +22,15 @@ export interface DepositAddressDoc {
     user: number;
     chain: string;
     address: string;
-    memo?: string,
+    memo?: string;
     active: boolean;
+}
+
+export interface AvailableTokenInfo {
+    symbol: string;
+    name: string;
+    decimals: number;
+    contract?: string;
 }
 
 export interface CustodySliceState {
@@ -31,15 +38,11 @@ export interface CustodySliceState {
     // user agents list
     agents: Record<string, Agent>;
     // user agens data
-    agentsData: Record<string, AgentData>,
-    // map user index to its address
-    depositAddresses: DepositAddressDoc[];
-    // agent deposit history
-    deposits: any[];
+    agentsData: Record<string, AgentData>;
     // withdraws that is not signed completely or not sent to the zellular network
-    pendingWithdraws: any[],
-    // agent withdraw history
-    withdraws: any[];
+    pendingWithdraws: any[];
+    // list of all available tokens
+    availableTokens: Record<string, AvailableTokenInfo[]>;
     // async request status
     status: "idle" | "loading" | "failed";
 }
@@ -49,10 +52,8 @@ const initialState: CustodySliceState = {
     agents: {},
     agentsData: {},
     
-    depositAddresses: [],
-    deposits: [],
     pendingWithdraws: [],
-    withdraws: [],
+    availableTokens: {},
     status: "idle",
 };
 
@@ -73,9 +74,6 @@ export const custodySlice = createAppSlice({
                 ...state.agentsData,
                 [agent]: agentData,
             };
-        }),
-        setDepositAddresses: create.reducer((state, action: PayloadAction<DepositAddressDoc[]>) => {
-            state.depositAddresses = action.payload;
         }),
         fetchAgents: create.asyncThunk(
             async (user: string) => {
@@ -117,42 +115,6 @@ export const custodySlice = createAppSlice({
                 },
             },
         ),
-        fetchDepositAddresses: create.asyncThunk(
-            async (args: {agent: string}) => {
-                const response:DepositAddressDoc[] = await CustodyApi.getDepositAddresses(args.agent);
-                return response;
-            },
-            {
-                pending: (state) => {
-                    state.status = "loading";
-                },
-                fulfilled: (state, action) => {
-                    state.status = "idle";
-                    state.depositAddresses = action.payload;
-                },
-                rejected: (state) => {
-                    state.status = "failed";
-                },
-            },
-        ),
-        fetchDeposits: create.asyncThunk(
-            async (params: {agent: string, account?: number, user?: number}) => {
-                const response = await CustodyApi.getDeposits(params.agent, params.account, params.user);
-                return response;
-            },
-            {
-                pending: (state) => {
-                    state.status = "loading";
-                },
-                fulfilled: (state, action) => {
-                    state.status = "idle";
-                    state.deposits = action.payload;
-                },
-                rejected: (state) => {
-                    state.status = "failed";
-                },
-            },
-        ),
         fetchPendingWithdraws: create.asyncThunk(
             async (user: string) => {
                 const response = await backendApi.getPendingWithdraws(user);
@@ -171,9 +133,9 @@ export const custodySlice = createAppSlice({
                 },
             },
         ),
-        fetchWithdraws: create.asyncThunk(
-            async (params: {agent: string, account?: number, user?: number}) => {
-                const response = await CustodyApi.getWithdraws(params.agent, params.account, params.user);
+        fetchAvailableTokens: create.asyncThunk(
+            async () => {
+                const response = await CustodyApi.getAvailableTokens();
                 return response;
             },
             {
@@ -182,7 +144,7 @@ export const custodySlice = createAppSlice({
                 },
                 fulfilled: (state, action) => {
                     state.status = "idle";
-                    state.withdraws = action.payload;
+                    state.availableTokens = action.payload;
                 },
                 rejected: (state) => {
                     state.status = "failed";
@@ -194,10 +156,8 @@ export const custodySlice = createAppSlice({
         selectUser: (custody) => custody.user,
         selectAgents: (custody) => custody.agents,
         selectAgentsData: (custody) => custody.agentsData,
-        selectDepositAddresses: (custody) => custody.depositAddresses,
-        selectDeposits: (custody) => custody.deposits,
         selectPendingWithdraws: (custody) => custody.pendingWithdraws,
-        selectWithdraws: (custody) => custody.withdraws,
+        selectAvailableTokens: (custody) => custody.availableTokens,
     },
 });
 
@@ -208,10 +168,8 @@ export const {
     setAgentData,
     fetchAgents, 
     fetchAgentData,
-    fetchDepositAddresses, 
-    fetchDeposits, 
     fetchPendingWithdraws, 
-    fetchWithdraws 
+    fetchAvailableTokens,
 } = custodySlice.actions;
 
 // Selectors returned by `slice.selectors` take the root state as their first argument.
@@ -219,8 +177,6 @@ export const {
     selectUser, 
     selectAgents, 
     selectAgentsData,
-    selectDepositAddresses, 
-    selectDeposits, 
     selectPendingWithdraws, 
-    selectWithdraws 
+    selectAvailableTokens,
 } = custodySlice.selectors;

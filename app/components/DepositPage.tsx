@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { Tabs } from "./tabs";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { fetchAgentData, fetchDepositAddresses, selectAgents, selectAgentsData } from "@/lib/features/custody/custodySlice";
+import { fetchAgentData, selectAgents, selectAgentsData } from "@/lib/features/custody/custodySlice";
 import { formatAddress } from "@/lib/utils";
 import { Table, TBody, Td, THead, Tr } from "./table";
 import CustomInput from "./input";
@@ -34,7 +34,7 @@ export default function DepositPage() {
                 [parseInt(rangeFrom), parseInt(rangeTo)]
             );
             alert("Addresses created, TX: " + result)
-            dispatch(fetchDepositAddresses({ agent: agent.id }))
+            dispatch(fetchAgentData(agent.id))
         } catch (err) {
             setError("Invalid JSON format");
         }

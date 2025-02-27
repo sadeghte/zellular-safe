@@ -7,14 +7,9 @@ import {
     fetchAgents,
     selectUser,
     selectAgents,
-    selectDepositAddresses,
-    selectDeposits,
-    fetchDepositAddresses,
-    fetchDeposits,
+    fetchAgentData,
     fetchPendingWithdraws,
     selectPendingWithdraws,
-    fetchWithdraws,
-    selectWithdraws,
 } from "@/lib/features/custody/custodySlice"
 import { useSDK } from "@metamask/sdk-react";
 import { ethers } from "ethers";
@@ -58,9 +53,7 @@ export default function Index() {
 
     useEffect(() => {
         if (!!selectedAgent) {
-            dispatch(fetchDepositAddresses({ agent: selectedAgent.id }))
-            dispatch(fetchDeposits({ agent: selectedAgent.id }))
-            dispatch(fetchWithdraws({ agent: selectedAgent.id }))
+            dispatch(fetchAgentData(selectedAgent.id))
         }
     }, [selectedAgent]);
 

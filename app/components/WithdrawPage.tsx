@@ -7,6 +7,8 @@ import {
     fetchAgentData,
     fetchPendingWithdraws,
     selectPendingWithdraws,
+    fetchAvailableTokens,
+    selectAvailableTokens,
 } from "@/lib/features/custody/custodySlice";
 import { useSDK } from "@metamask/sdk-react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
@@ -20,6 +22,7 @@ import * as backend from "@/lib/backend";
 import * as CustodyServiceApi from "@/lib/features/custody/custodyApi"
 import styles from "../styles/layout.module.css";
 import { PendingWithdrawDoc } from "@/models/pending-withdraw";
+import { calculateAgentBalance } from "@/lib/agent-utils";
 
 
 export default function WithdrawPage() {
@@ -32,6 +35,7 @@ export default function WithdrawPage() {
     const agents = useAppSelector(selectAgents);
     const agentsData = useAppSelector(selectAgentsData);
     const pendingWithdraws = useAppSelector(selectPendingWithdraws);
+    const availableTokens = useAppSelector(selectAvailableTokens);
 
     const [selectedBalance, setSelectedBalance] = useState(null);
     const [amount, setAmount] = useState('');
@@ -132,25 +136,27 @@ export default function WithdrawPage() {
 
     const balances = useMemo(
         () => {
-            const deposits = agentsData[agentId]?.deposits || []
-            let result: any = {}
-            for (let d of deposits) {
-                let key = `${d.chain}-${d.deposit.token}`
-                if (!result[key]) {
-                    result[key] = {
-                        chain: d.chain,
-                        ...cloneObject(d.deposit)
-                    }
-                    result[key].amount = parseInt(d.deposit.amount)
-                }
-                else {
-                    result[key].amount += parseInt(d.deposit.amount)
-                }
-            }
+            let result: any = calculateAgentBalance(
+                agentsData[agentId]?.deposits || [],
+                agentsData[agentId]?.withdraws || []
+            )
             return result
         },
         [agentsData, agentId]
     );
+
+    const tokenDecimals = useMemo(
+        () => {
+            let result:Record<string, number> = {}
+            for(const chain in availableTokens) {
+                for(const info of availableTokens[chain]) {
+                    result[`${chain}-${info.symbol}`] = info.decimals;
+                }
+            }
+            return result
+        },
+        [availableTokens]
+    )
 
     useEffect(() => {
         if (!account)
@@ -158,6 +164,7 @@ export default function WithdrawPage() {
         dispatch(fetchPendingWithdraws(account!));
         dispatch(fetchAgents(account!));
         dispatch(fetchAgentData(agentId));
+        dispatch(fetchAvailableTokens());
     }, [account, agentId])
 
     return !agentsData[agentId] ? (
@@ -185,10 +192,12 @@ export default function WithdrawPage() {
                                 const canSubmit = numSigned >= threshold;
                                 const alreadySigned = Object.keys(pw.signatures || {}).includes(account!.toLowerCase());
                                 const isNeedToSign = numSigned < threshold && !alreadySigned;
+                                const {chain, symbol} = pw.token;
+                                const decimal = tokenDecimals[`${chain}-${symbol}`] || 0
                                 return <Tr key={index}>
-                                    <Td>{pw.token.symbol}</Td>
-                                    <Td>{pw.token.chain}</Td>
-                                    <Td>{pw.amount}</Td>
+                                    <Td>{symbol}</Td>
+                                    <Td>{chain}</Td>
+                                    <Td>{pw.amount / (10**decimal)}</Td>
                                     <Td>{formatAddress(pw.toAddress)}</Td>
                                     <Td>{pw.agent.threshold}</Td>
                                     <Td>{numSigned}</Td>
@@ -212,14 +221,16 @@ export default function WithdrawPage() {
                         {/* <div>{JSON.stringify(selectedBalance)}</div> */}
                         <select onChange={handleTokenChange} style={{ width: '100%' }} className={styles.Input}>
                             <option value={"null"}> </option>
-                            {Object.entries(balances).map(([key, balance]) => (
-                                <option
-                                    key={key}
-                                    value={JSON.stringify(balance)}
-                                >
-                                    {balance.token} on {balance.chain} network
-                                </option>
-                            ))}
+                            {Object.entries(balances)
+                                .filter(([key, balance]) => balance.amount>0)
+                                .map(([key, balance]) => (
+                                    <option
+                                        key={key}
+                                        value={JSON.stringify(balance)}
+                                    >
+                                        {balance.token} on {balance.chain} network
+                                    </option>
+                                ))}
                         </select>
                     </li>
                     <li>

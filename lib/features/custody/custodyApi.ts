@@ -1,11 +1,11 @@
 
-import { Agent, DepositAddressDoc } from "./custodySlice";
+import { Agent, AvailableTokenInfo, DepositAddressDoc } from "./custodySlice";
 import axios from "axios";
 
 
 const CUSTODY_URL = process.env.NEXT_PUBLIC_CUSTODY_SERVICE_RPC!
 
-const callRpcMethod = async (method: string, params: any) => {
+const callRpcMethod = async (method: string, params?: any) => {
     // const response = await fetch(CUSTODY_URL, {
     //     method: "POST",
     //     headers: { "Content-Type": "application/json" },
@@ -22,6 +22,11 @@ export const registerAgent = async (signers: string[], threshold: number) => {
     const response = await callRpcMethod("registerAgent", { signers, threshold });
     return response.result;
 }
+
+export const getAvailableTokens = async (): Promise<Record<string, AvailableTokenInfo[]>> => {
+    const response = await callRpcMethod("getAvailableTokens");
+    return response.result;
+};
 
 export const getUserAgents = async (userAddress: string): Promise<Agent[]> => {
     const response = await callRpcMethod("getUserAgents", { userAddress });

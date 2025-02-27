@@ -2,11 +2,12 @@
 
 import React, { useEffect } from "react";
 import { useParams } from "next/navigation"; // Import useParams
-import { fetchAgentData, selectAgents, selectAgentsData, selectDeposits } from "@/lib/features/custody/custodySlice";
+import { AgentData, fetchAgentData, selectAgents, selectAgentsData } from "@/lib/features/custody/custodySlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useMemo } from "react";
 import { cloneObject } from "@/lib/utils";
 import { Table, TBody, Td, THead, Tr } from "@/app/components/table";
+import { calculateAgentBalance } from "@/lib/agent-utils";
 
 
 export default function ItemPage() {
@@ -16,8 +17,7 @@ export default function ItemPage() {
     const dispatch = useAppDispatch();
 
     const agents = useAppSelector(selectAgents);
-    const agentsData = useAppSelector(selectAgentsData)
-    const deposits = useAppSelector(selectDeposits);
+    const agentsData:Record<string, AgentData> = useAppSelector(selectAgentsData)
 
     const agent = useMemo(() => {
         return agents[agentId]
@@ -33,20 +33,10 @@ export default function ItemPage() {
 
     const balances = useMemo(
         () => {
-            let result: any = {}
-            for (let d of currentAgentData?.deposits || []) {
-                let key = `${d.chain}-${d.deposit.token}`
-                if (!result[key]) {
-                    result[key] = {
-                        chain: d.chain,
-                        ...cloneObject(d.deposit)
-                    }
-                    result[key].amount = parseInt(d.deposit.amount)
-                }
-                else {
-                    result[key].amount += parseInt(d.deposit.amount)
-                }
-            }
+            let result = calculateAgentBalance(
+                currentAgentData?.deposits, 
+                currentAgentData?.withdraws
+            )
             return result
         },
         [currentAgentData]
